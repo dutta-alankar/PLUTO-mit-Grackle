@@ -232,15 +232,9 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid)
     double cool_time_min = 1.0e+30;
     DOM_LOOP(k, j, i) {
         id = (k-grid->lbeg[KDIR]) * grid->np_int[JDIR] * grid->np_int[IDIR] + (j-grid->lbeg[JDIR]) * grid->np_int[IDIR] + (i-grid->lbeg[IDIR]);
-        cool_time_min = (cooling_time[id]<cool_time_min)?cooling_time[id]:cool_time_min;
+        cool_time_min = (fabs(cooling_time[id])<cool_time_min)?fabs(cooling_time[id]):cool_time_min;
     }
-    #ifdef PARALLEL
-    MPI_Barrier(MPI_COMM_WORLD);
-    double tmp;
-    MPI_Allreduce(&cool_time_min, &tmp, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
-    cool_time_min = tmp;
-    #endif
-    cool_time_min = fabs(cool_time_min);
+    Dts->dt_cool = cool_time_min;
     // printLog("> step %d: cooling_time = %24.16g Myr (%e code)\n", g_stepNumber, cool_time_min * grackle_code_units.time_units/ (1.0e+06*365*24*60*60), cool_time_min );
     
     // Calculate temperature in K.

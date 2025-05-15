@@ -33,7 +33,7 @@
 #include "globals.h"
 
 #ifndef SHOW_TIME_STEPS
-  #define SHOW_TIME_STEPS  NO  /* Show time steps due to different processes */
+  #define SHOW_TIME_STEPS  YES  /* Show time steps due to different processes */
 #endif
 #ifndef SHOW_TIMING
   #define SHOW_TIMING      NO  /* Compute CPU timing between steps */
@@ -271,11 +271,14 @@ int main (int argc, char *argv[])
          splitting are used.
      ------------------------------------------------------ */
 
+    /*
     #if (COOLING == NO) 
     g_dt = NextTimeStep(&Dts, &runtime, grd);
     #else
     if (g_stepNumber%2 == 1) g_dt = NextTimeStep(&Dts, &runtime, grd);
     #endif
+    */
+    g_dt = NextTimeStep(&Dts, &runtime, grd);
 
     g_stepNumber++;
     first_step = 0;
@@ -621,7 +624,9 @@ double NextTimeStep (timeStep *Dts, Runtime *runtime, Grid *grid)
       step to be fixed, regardless of any stability issue.
       Beware !!
    -------------------------------------------------------- */
-
+#if (COOLING != NO) 
+  if (g_stepNumber%2 == 1) return g_dt;
+#endif
   if (runtime->cfl_max_var == 1.0) return g_dt;
   return(dtnext);
 }
