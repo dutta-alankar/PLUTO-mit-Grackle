@@ -1,0 +1,12 @@
+USER           = unknown
+WORKING_DIR    = /freya/ptmp/mpa/adutt/pluto-mit-grackle/cooling-example
+SYSTEM_NAME    = Linux
+NODE_NAME      = freya01
+RELEASE        = 5.3.18-150300.59.54-default
+ARCH           = x86_64
+BYTE_ORDER     = little
+VERSION        = #1 SMP Sat Mar 5 10:00:50 UTC 2022 (1d0fa95)
+PLUTO_DIR      = /freya/ptmp/mpa/adutt/pluto-mit-grackle/cooling-example/PLUTOCODE
+PLUTO_VERSION  = "4.4"
+C_COMPILER     = gcc
+MPI_C_COMPILER = mpicc

@@ -1,0 +1,82 @@
+2025-05-14 14:34:06
+
+The Grackle Version 3.3.1-dev
+Git Branch   main
+Git Revision 0a1493839b1279c438cc3ffcfa2f7bc248e49def
+
+Grackle build options:
+
+   Built with CMake
+
+   GRACKLE_USE_DOUBLE                  : ON
+   GRACKLE_USE_OPENMP                  : OFF
+   BUILD_TYPE                          : Release
+
+Grackle build flags:
+
+  CC = /mpcdf/soft/SLE_15/packages/x86_64/gcc/11.2.0/bin/gcc
+  FC = /mpcdf/soft/SLE_15/packages/x86_64/gcc/11.2.0/bin/gfortran
+  LD = /usr/bin/ld
+
+Grackle run-time parameters:
+use_grackle                       = 1
+with_radiative_cooling            = 1
+primordial_chemistry              = 0
+dust_chemistry                    = 0
+metal_cooling                     = 1
+UVbackground                      = 1
+grackle_data_file                 = ./data/CloudyData_UVB=FG2011.h5
+cmb_temperature_floor             = 1
+Gamma                             = 1.66667
+h2_on_dust                        = 0
+use_dust_density_field            = 0
+dust_recombination_cooling        = -1
+photoelectric_heating             = 0
+photoelectric_heating_rate        = 8.5e-26
+use_isrf_field                    = 0
+interstellar_radiation_field      = 1.7
+use_volumetric_heating_rate       = 0
+use_specific_heating_rate         = 0
+use_temperature_floor             = 0
+temperature_floor_scalar          = 0
+three_body_rate                   = 0
+cie_cooling                       = 0
+h2_optical_depth_approximation    = 0
+ih2co                             = 1
+ipiht                             = 1
+HydrogenFractionByMass            = 0.715768
+DeuteriumToHydrogenRatio          = 6.8e-05
+SolarMetalFractionByMass          = 0.01295
+local_dust_to_gas_ratio           = 0.009387
+CaseBRecombination                = 0
+NumberOfTemperatureBins           = 600
+TemperatureStart                  = 1
+TemperatureEnd                    = 1e+09
+NumberOfDustTemperatureBins       = 250
+DustTemperatureStart              = 1
+DustTemperatureEnd                = 1500
+Compton_xray_heating              = 0
+LWbackground_sawtooth_suppression = 0
+LWbackground_intensity            = 0
+UVbackground_redshift_on          = -99999
+UVbackground_redshift_off         = -99999
+UVbackground_redshift_fullon      = -99999
+UVbackground_redshift_drop        = -99999
+cloudy_electron_fraction_factor   = 0.00915396
+use_radiative_transfer            = 0
+radiative_transfer_coupled_rate_solver = 0
+radiative_transfer_intermediate_step = 0
+radiative_transfer_hydrogen_only  = 0
+self_shielding_method             = 0
+H2_self_shielding                 = 0
+H2_custom_shielding               = 0
+h2_charge_exchange_rate           = 1
+h2_dust_rate                      = 1
+h2_h_cooling_rate                 = 1
+collisional_excitation_rates      = 1
+collisional_ionisation_rates      = 1
+recombination_cooling_rates       = 1
+bremsstrahlung_cooling_rates      = 1
+max_iterations                    = 10000
+exit_after_iterations_exceeded    = 0
+omp_nthreads                      = 0
