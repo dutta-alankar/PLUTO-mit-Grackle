@@ -133,7 +133,9 @@ void Analysis (const Data *d, Grid *grid)
     dT = T_avg - temperature_old;
     double derv = dE/(g_time-time_old);
     derv = derv * UNIT_DENSITY * pow(UNIT_VELOCITY, 3) * pow(UNIT_LENGTH, -1);
-    lambda = -derv/pow((mass/vol)*UNIT_DENSITY/(0.609*CONST_mp), 2);
+    double ndens = (mass/vol)*UNIT_DENSITY/(0.609*CONST_mp);
+    double nH = ndens*0.609*0.71;
+    lambda = -derv/pow(nH, 2);
     time_old = g_time;
     energy_old = energy_avg;
     temperature_old = T_avg;
