@@ -81,7 +81,7 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid)
         // or with the grackle_config_data pointer declared in grackle.h (see further below).
         grackle_config_data->use_grackle = 1;            // chemistry on
         grackle_config_data->with_radiative_cooling = 1; // cooling on
-        grackle_config_data->primordial_chemistry = 1;   // molecular network with H, He, D
+        grackle_config_data->primordial_chemistry = 0;   // molecular network with H, He, D
         grackle_config_data->dust_chemistry = 0;         // dust processes
         grackle_config_data->metal_cooling = 1;          // metal cooling on
         grackle_config_data->UVbackground = 1;           // UV background on
