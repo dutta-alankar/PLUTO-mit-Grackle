@@ -149,7 +149,7 @@ void Analysis (const Data *d, Grid *grid)
       fprintf (fp,"# %s\t=\t%.5e\n", "UNIT_DENSITY", UNIT_DENSITY);
       fprintf (fp,"# %s\t=\t%.5e\n", "UNIT_VELOCITY", UNIT_VELOCITY);
       // Header
-      fprintf (fp,"# (1)%s\t\t(2)%s\t\t(3)%s\t\t\(4)%s\t\t",
+      fprintf (fp,"# (1)%s\t(2)%s\t(3)%s\t\(4)%s\t\n",
                "time (code)", "temperature (K)", "energy (erg/cm^3)", "lambda (ergcm^3/s)");
       fclose(fp);
     }
