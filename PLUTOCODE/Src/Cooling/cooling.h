@@ -55,6 +55,7 @@ double SolveODE_ROS34 (double *, double *, double *, double, double);
 
 #if COOLING == GRACKLE
 void grackle_cooling_version_info(char *);
+void finalize_grackle();
 void call_grackle(const Data *, double, timeStep *, Grid *);
 #endif
 

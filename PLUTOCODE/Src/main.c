@@ -78,10 +78,6 @@ int main (int argc, char *argv[])
   MPI_Comm_rank (MPI_COMM_WORLD, &prank);
 #endif
 
-#if COOLING==GRACKLE
-  g_coolingEnd = 0;
-#endif
-
   time (&tbeg);
 
 /* --------------------------------------------------------
@@ -319,8 +315,7 @@ int main (int argc, char *argv[])
 
   #if COOLING==GRACKLE
   // free grackle memory
-  g_coolingEnd = 1;
-  call_grackle(NULL, 1.0e-15, NULL, NULL);
+  finalize_grackle();
   #endif
   FreeArray4D ((void *) data.Vc);
   #ifdef PARALLEL

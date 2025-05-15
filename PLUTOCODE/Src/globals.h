@@ -82,10 +82,6 @@ int EXn, EXt, EXb;
   int FRn, FRt, FRb;
 #endif
 
-#if COOLING==GRACKLE
-  int g_coolingEnd = 0;
-#endif
-
 /**@} */
                
 int g_i; /**<  x1 grid index when sweeping along the x2 or x3 direction. */

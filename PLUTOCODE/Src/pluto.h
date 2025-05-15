@@ -865,10 +865,6 @@ extern double g_inputParam[32];
  extern double g_totalOpacity;
 #endif
 
-#if COOLING==GRACKLE
- extern int g_coolingEnd;
-#endif
-
 #ifdef CHOMBO
  extern double glm_ch_max, glm_ch_max_loc, g_coeff_dl_min;
  extern double g_level_dx;
