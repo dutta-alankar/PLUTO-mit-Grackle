@@ -490,6 +490,19 @@ typedef struct FLOAT_VECT{
   float v1, v2, v3;
 } Float_Vect;
 
+#if COOLING==GRACKLE
+typedef struct grackle_params_{
+  int  grackle_verbose;
+  int  grackle_primordial_chemistry;
+  int  grackle_dust_chemistry;
+  int  grackle_metal_cooling;
+  int  grackle_UVbackground;
+  char grackle_data_file[256];
+  int  grackle_use_temperature_floor;
+  double grackle_temperature_floor_scalar;
+} grackle_params;
+#endif
+
 /* ********************************************************************* */
 /*! The List defines a collection of integer values typically used
     as argument to the FOR_EACH() macro.

@@ -52,7 +52,7 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid)
         }
     }
     // Enable output
-    grackle_verbose = 0;
+    grackle_verbose = g_grackle_params.grackle_verbose;
 
     // First, set up the units system.
     // These are conversions from code units to cgs.
@@ -81,13 +81,14 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid)
         // or with the grackle_config_data pointer declared in grackle.h (see further below).
         grackle_config_data->use_grackle = 1;            // chemistry on
         grackle_config_data->with_radiative_cooling = 1; // cooling on
-        grackle_config_data->primordial_chemistry = 0;   // molecular network with H, He, D
-        grackle_config_data->dust_chemistry = 0;         // dust processes
-        grackle_config_data->metal_cooling = 1;          // metal cooling on
-        grackle_config_data->UVbackground = 1;           // UV background on
-        grackle_config_data->grackle_data_file = "./data/CloudyData_UVB=FG2011.h5"; // data file
-        grackle_config_data->use_temperature_floor = 1;  // switch on a scalar temperature floor
-        grackle_config_data->temperature_floor_scalar = g_minCoolingTemp;  // temperature floor
+        grackle_config_data->primordial_chemistry = g_grackle_params.grackle_primordial_chemistry;   // molecular network with H, He, D
+        grackle_config_data->dust_chemistry = g_grackle_params.grackle_dust_chemistry;         // dust processes
+        grackle_config_data->metal_cooling = g_grackle_params.grackle_metal_cooling;          // metal cooling on
+        grackle_config_data->UVbackground = g_grackle_params.grackle_UVbackground;           // UV background on
+        grackle_config_data->grackle_data_file = g_grackle_params.grackle_data_file; // data file
+        grackle_config_data->use_temperature_floor = g_grackle_params.grackle_use_temperature_floor;  // switch on a scalar temperature floor
+        if (g_grackle_params.grackle_temperature_floor_scalar>0)
+            grackle_config_data->temperature_floor_scalar = (g_grackle_params.grackle_temperature_floor_scalar>0)?g_grackle_params.grackle_temperature_floor_scalar:g_minCoolingTemp;  // temperature floor
 
         // Finally, initialize the chemistry object.
         if (initialize_chemistry_data(&grackle_code_units) == 0) {
@@ -174,7 +175,7 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid)
             grackle_chemistry_fields.HeI_density[id] = (1.0 - grackle_config_data->HydrogenFractionByMass) * grackle_chemistry_fields.density[id];
             grackle_chemistry_fields.HeII_density[id] = tiny_number * grackle_chemistry_fields.density[id];
             grackle_chemistry_fields.HeIII_density[id] = tiny_number * grackle_chemistry_fields.density[id];
-            grackle_chemistry_fields.e_density[id] = grackle_chemistry_fields.HII_density[id] + (grackle_chemistry_fields.HeII_density[id] + 2*grackle_chemistry_fields.HeIII_density[id])/4; 
+            grackle_chemistry_fields.e_density[id] = (grackle_chemistry_fields.HII_density[id] + (grackle_chemistry_fields.HeII_density[id] + 2*grackle_chemistry_fields.HeIII_density[id])/4)*(CONST_me/CONST_mp); 
         }
         if (grackle_config_data->primordial_chemistry >= 2) {
             grackle_chemistry_fields.HM_density[id] = tiny_number * grackle_chemistry_fields.density[id];

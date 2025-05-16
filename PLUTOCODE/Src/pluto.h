@@ -875,6 +875,10 @@ extern double g_inputParam[32];
  #endif
 #endif
 
+#if COOLING==GRACKLE
+  extern grackle_params g_grackle_params;
+#endif
+
 #if DEBUG == TRUE
   extern int d_indent;
   extern int d_condition;
