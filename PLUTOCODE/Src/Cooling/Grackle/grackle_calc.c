@@ -168,7 +168,7 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid)
     DOM_LOOP (k, j, i) {
         id = (k-grid->lbeg[KDIR]) * grid->np_int[JDIR] * grid->np_int[IDIR] + (j-grid->lbeg[JDIR]) * grid->np_int[IDIR] + (i-grid->lbeg[IDIR]);
         // printLog("DEBUG: (k, j, i, id) = (%d, %d, %d, %d) \n", k, j, i, id);
-	    grackle_chemistry_fields.density[id] = (gr_float)d->Vc[RHO][k][j][i];
+	grackle_chemistry_fields.density[id] = (gr_float)d->Vc[RHO][k][j][i];
         if (grackle_config_data->primordial_chemistry >= 1) {
             grackle_chemistry_fields.HI_density[id] = tiny_number * grackle_chemistry_fields.density[id];
             grackle_chemistry_fields.HII_density[id] = grackle_config_data->HydrogenFractionByMass * grackle_chemistry_fields.density[id];
