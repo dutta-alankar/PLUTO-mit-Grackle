@@ -172,9 +172,9 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid)
         if (grackle_config_data->primordial_chemistry >= 1) {
             grackle_chemistry_fields.HI_density[id] = tiny_number * grackle_chemistry_fields.density[id];
             grackle_chemistry_fields.HII_density[id] = grackle_config_data->HydrogenFractionByMass * grackle_chemistry_fields.density[id];
-            grackle_chemistry_fields.HeI_density[id] = (1.0 - grackle_config_data->HydrogenFractionByMass) * grackle_chemistry_fields.density[id];
+            grackle_chemistry_fields.HeI_density[id] = tiny_number * grackle_chemistry_fields.density[id];
             grackle_chemistry_fields.HeII_density[id] = tiny_number * grackle_chemistry_fields.density[id];
-            grackle_chemistry_fields.HeIII_density[id] = tiny_number * grackle_chemistry_fields.density[id];
+            grackle_chemistry_fields.HeIII_density[id] = (1.0 - grackle_config_data->HydrogenFractionByMass) * grackle_chemistry_fields.density[id];
             grackle_chemistry_fields.e_density[id] = (grackle_chemistry_fields.HII_density[id] + (grackle_chemistry_fields.HeII_density[id] + 2*grackle_chemistry_fields.HeIII_density[id])/4); // *(CONST_me/CONST_mp); 
 	    // normalization: see https://grackle.readthedocs.io/en/latest/Interaction.html#density-note
         }
