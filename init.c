@@ -72,19 +72,37 @@ void InitDomain (Data *d, Grid *grid)
  *
  *********************************************************************** */
 {
-  int i, j, k;
+  int i, j, k, nv;
   g_gamma = 5/3.;
   g_minCoolingTemp = 1.0e+04;
   
   TOT_LOOP(k, j, i) {
     d->Vc[RHO][k][j][i] = 1.0;
     d->Vc[PRS][k][j][i] = ((d->Vc[RHO][k][j][i]*UNIT_DENSITY)/(0.609*CONST_mp) * CONST_kB * g_inputParam[TINI])/(UNIT_DENSITY*pow(UNIT_VELOCITY,2));
-    d->Vc[VX1][k][j][i] = 0.;
+    d->Vc[VX1][k][j][i] = 1.;
     d->Vc[VX2][k][j][i] = 0.;
     d->Vc[VX3][k][j][i] = 0.;
     #if COOLING==GRACKLE
+    double tiny_number = 1.e-20;
+    double XH_mass = 0.715768377353088514;
+    double ZmetSol_mass = 0.01295; 
     d->Vc[TEMP][k][j][i] = g_inputParam[TINI];
     d->Vc[MU][k][j][i] = 0.609;
+    NIONS_LOOP(nv) d->Vc[nv][k][j][i] = 0;
+    d->Vc[X_HI][k][j][i]     = tiny_number;
+    d->Vc[X_HII][k][j][i]    = XH_mass;
+    d->Vc[Y_HeI][k][j][i]    = tiny_number;
+    d->Vc[Y_HeII][k][j][i]   = tiny_number;
+    d->Vc[Y_HeIII][k][j][i]  = (1-XH_mass);
+    d->Vc[X_HM][k][j][i]     = tiny_number;
+    d->Vc[X_H2I][k][j][i]    = tiny_number;
+    d->Vc[X_H2II][k][j][i]   = tiny_number;
+    d->Vc[X_DI][k][j][i]     = tiny_number;
+    d->Vc[X_DII][k][j][i]    = 2.0 * 3.4e-05;
+    d->Vc[X_HDI][k][j][i]    = tiny_number;
+    d->Vc[elec][k][j][i]     = (d->Vc[X_HII][k][j][i] + d->Vc[X_DII][k][j][i] + 
+	                           (d->Vc[Y_HeII][k][j][i]+2*d->Vc[Y_HeIII][k][j][i])/4.)*d->Vc[RHO][k][j][i];
+    d->Vc[Z_MET][k][j][i]    = 1.0;
     #endif
   }
 }

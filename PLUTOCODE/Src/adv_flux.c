@@ -72,6 +72,31 @@ void AdvectFlux (const Sweep *sweep, int beg, int end, Grid *grid)
 
     NSCL_LOOP(nv) flux[nv] = flux[RHO]*ts[nv];
     
+    #if COOLING==GRACKLE
+
+    flux[elec] = 0.;
+    
+    if (g_grackle_params.grackle_primordial_chemistry >= 1) 
+        phi = ts[X_HI] + ts[X_HII];
+    if (g_grackle_params.grackle_primordial_chemistry >= 2)
+        phi += (ts[X_HM] + ts[X_H2I] + ts[X_H2II]);
+    if (g_grackle_params.grackle_primordial_chemistry >= 3)
+        phi += (ts[X_DI]  + ts[X_DII] + ts[X_HDI]); 
+    NIONS_LOOP(nv) {
+      if ((nv!=Y_HeI) && (nv!=Y_HeII) && (nv!=Y_HeIII) && (nv!=elec) && (nv!=Z_MET)) {
+        flux[nv] /= phi;
+      }
+    }
+    if (g_grackle_params.grackle_primordial_chemistry >= 1)
+        phi = ts[Y_HeI] + ts[Y_HeII] + ts[Y_HeIII];
+    NIONS_LOOP(nv) {
+      if ((nv==Y_HeI) || (nv==Y_HeII) || (nv==Y_HeIII)) {
+        flux[nv] /= phi;
+      }       
+    }
+
+    #endif
+
     #if COOLING == MINEq
 
     /* -----   He   -----  */

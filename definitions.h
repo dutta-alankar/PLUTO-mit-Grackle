@@ -1,5 +1,5 @@
 #define  PHYSICS                        HD
-#define  DIMENSIONS                     1
+#define  DIMENSIONS                     3
 #define  GEOMETRY                       CARTESIAN
 #define  BODY_FORCE                     NO
 #define  COOLING                        GRACKLE
