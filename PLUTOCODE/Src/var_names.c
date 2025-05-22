@@ -123,7 +123,7 @@ void SetDefaultVarNames(Output *output)
        strcpy(output->var_name[X_DI], "DI");
        strcpy(output->var_name[X_DII], "DII");
        strcpy(output->var_name[X_HDI], "HDI");
-       strcpy(output->var_name[elec], "RHO_e");
+       strcpy(output->var_name[elec], "rho_e");
        strcpy(output->var_name[Z_MET], "met");
   }
 #elif COOLING == SNEq
