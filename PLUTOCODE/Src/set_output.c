@@ -196,12 +196,12 @@ void SetOutput (Data *d, Runtime *runtime)
       output->dump_var[X_H2II] = YES;
     }
     if (g_grackle_params.grackle_primordial_chemistry>=3) {
-      output->dump_var[X_DI]  = YES;
-      output->dump_var[X_DII] = YES;
-      output->dump_var[X_HDI] = YES;
+      output->dump_var[X_DI]   = YES;
+      output->dump_var[X_DII]  = YES;
+      output->dump_var[X_HDI]  = YES;
     }
     if (g_grackle_params.grackle_metal_cooling==1)
-      output->dump_var[Z_MET]   = YES;
+      output->dump_var[Z_MET] = YES;
 #endif
 
     #if ENTROPY_SWITCH

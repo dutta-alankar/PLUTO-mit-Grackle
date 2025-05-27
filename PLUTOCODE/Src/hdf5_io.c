@@ -507,7 +507,7 @@ void WriteHDF5 (Output *output, Grid *grid)
   H5Sclose(memspace);
   H5Sclose(dataspace);
   H5Gclose(group); /* Close group "node_coords" */
-  // H5Fclose(file_identifier);
+  H5Fclose(file_identifier);
 
 /* Create XDMF file to read HDF5 output (Visit or Paraview) */
 

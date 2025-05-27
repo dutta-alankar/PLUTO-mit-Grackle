@@ -31,4 +31,4 @@
 
 // #define SHOW_TIMING                     YES
 #define SHOW_TIME_STEPS                 YES
-
+#define  MULTIPLE_LOG_FILES             YES

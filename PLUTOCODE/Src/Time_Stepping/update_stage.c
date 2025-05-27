@@ -159,7 +159,62 @@ void UpdateStage(Data *d, Data_Arr Uc, Data_Arr Us, double **aflux,
       ip  = sweepBox.n;
       g_i = i;  g_j = j;  g_k = k;
       for ((*ip) = 0; (*ip) < ntot; (*ip)++) {
-        NVAR_LOOP(nv) stateC->v[*ip][nv] = d->Vc[nv][k][j][i];
+        #if COOLING==GRACKLE
+	NIONS_LOOP(nv) {
+          if (nv==elec || nv==Z_MET) continue;
+	  if (isnan(d->Vc[nv][k][j][i]) || (d->Vc[nv][k][j][i]<0.)) d->Vc[nv][k][j][i] = 0.;
+        }
+	// normalize ions
+	double norm_H=0., norm_He=0.;
+	NIONS_LOOP(nv) {
+          if (g_grackle_params.grackle_primordial_chemistry==0) {
+	    norm_H  = 1.;
+	    norm_He = 1.;
+	  } else if (g_grackle_params.grackle_primordial_chemistry>=1) {
+	    if (nv==X_HI || nv==X_HII)
+	      norm_H += d->Vc[nv][k][j][i];
+	    if (nv==Y_HeI || nv==Y_HeII || nv==Y_HeIII)
+	      norm_He += d->Vc[nv][k][j][i];
+	  } else if (g_grackle_params.grackle_primordial_chemistry>=2) {
+	    if (nv==X_HM || nv==X_H2I || nv==X_H2II)
+              norm_H += d->Vc[nv][k][j][i];
+	  } else if (g_grackle_params.grackle_primordial_chemistry>=3) {
+            if (nv==X_DI || nv==X_DII || nv==X_HDI)
+              norm_H += d->Vc[nv][k][j][i];
+	  }
+	}
+	NIONS_LOOP(nv) {
+          if (nv==elec || nv==Z_MET) continue;
+	  if (nv==X_HI || nv==X_HII || nv==X_HM || nv==X_H2I || nv==X_H2II || nv==X_DI || nv==X_DII || nv==X_HDI) 
+            d->Vc[nv][k][j][i] /= norm_H;
+	  if (nv==Y_HeI || nv==Y_HeII)
+            d->Vc[nv][k][j][i] /= norm_He;
+	}
+	#endif
+        NVAR_LOOP(nv) {
+	  stateC->v[*ip][nv] = d->Vc[nv][k][j][i];
+          #if COOLING==GRACKLE
+	  switch (g_grackle_params.grackle_primordial_chemistry) {
+	    case 0:
+	      if (nv>=X_HI && nv<=elec)
+                stateC->v[*ip][nv] = 0.;
+	      break;
+	    case 1:
+	      if (nv>=X_HM && nv<=elec)
+	        stateC->v[*ip][nv] = 0.;
+	      break;
+	    case 2:
+	      if (nv>=X_DI && nv<=elec)
+                stateC->v[*ip][nv] = 0.;
+              break;
+	    default:
+	      if (nv==elec)
+	        stateC->v[*ip][nv] = 0.;
+          }
+	  if (nv>=X_HI && nv<=Z_MET)
+            stateC->v[*ip][nv] = (stateC->v[*ip][nv]<1.0e-10)?0.:stateC->v[*ip][nv];
+          #endif
+	}
         sweep.flag[*ip] = d->flag[k][j][i];
         #ifdef STAGGERED_MHD
         sweep.Bn[*ip] = d->Vs[g_dir][k][j][i];

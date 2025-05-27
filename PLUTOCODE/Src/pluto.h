@@ -481,8 +481,8 @@
 #endif
 
 #if COOLING==GRACKLE
- #define TEMP (NFLX + NSCL + NDUST_FLUID)
- #define MU   (NFLX + NSCL + NDUST_FLUID + 1)
+ #define TEMP NVAR
+ #define MU   (NVAR + 1)
 #endif
 
 /*! Define the conversion constant between dimensionless 
