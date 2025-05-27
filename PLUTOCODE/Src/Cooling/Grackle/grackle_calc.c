@@ -54,7 +54,7 @@ void normalize_ions_grackle (const Data *d, const chemistry_data *grackle_config
 
 void call_grackle_equil (const Data *d, Grid *grid) {
     double time = 13.6*1.0e+09*365*24*60*60/(UNIT_LENGTH/UNIT_VELOCITY); // Age of universe
-    call_grackle(d, time, NULL, grid, 1);
+    call_grackle(d, time, NULL, grid, 0, 0, 0, 0);
 }
 
 void call_grackle_equil_by_cell (const Data *d, Grid *grid, int i, int j, int k) {
@@ -70,6 +70,7 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid, int one_
  * \param [in]     dt     the time step to be taken
  * \param [out]    Dts    pointer to the Time_Step structure (do equilibrium if called with NULL)
  * \param [in]     grid   pointer to an array of Grid structures
+ * \param[in]      one_cell 1 means do only one cell
  *
  *********************************************************************** */
 {
