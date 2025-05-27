@@ -54,9 +54,13 @@ double SolveODE_ROS34 (double *, double *, double *, double, double);
    ******************************************************** */
 
 #if COOLING == GRACKLE
-void grackle_cooling_version_info(char *);
-void finalize_grackle();
-void call_grackle(const Data *, double, timeStep *, Grid *);
+#include "grackle.h"
+void grackle_cooling_version_info (char *);
+void finalize_grackle ();
+void call_grackle_equil (const Data *, Grid *);
+void normalize_ions_grackle (const Data *, const chemistry_data *, int, int, int);
+void call_grackle (const Data *, double, timeStep *, Grid *, int, int, int, int);
+void call_grackle_equil_by_cell (const Data *, Grid *, int, int, int);
   #define NIONS    13
   #define X_HI       (NFLX)
   #define X_HII      (NFLX + 1)
@@ -69,8 +73,8 @@ void call_grackle(const Data *, double, timeStep *, Grid *);
   #define X_DI       (NFLX + 8)
   #define X_DII      (NFLX + 9)
   #define X_HDI      (NFLX + 10)
-  #define Z_MET      (NFLX + 11)
-  #define elec       (NFLX + 12)
+  #define elec       (NFLX + 11)
+  #define Z_MET      (NFLX + 12)
 #endif
 
 #if COOLING == H2_COOL

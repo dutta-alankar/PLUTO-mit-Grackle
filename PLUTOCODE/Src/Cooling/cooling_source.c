@@ -55,7 +55,7 @@ void CoolingSource (const Data *d, double dt, timeStep *Dts, Grid *grid)
  *
  *********************************************************************** */
 {
-    call_grackle(d, dt, Dts, grid);
+    call_grackle(d, dt, Dts, grid, 0, 0, 0, 0);
 }
 #elif (COOLING != TOWNSEND) && (COOLING ! =GRACKLE)
 /* ********************************************************
