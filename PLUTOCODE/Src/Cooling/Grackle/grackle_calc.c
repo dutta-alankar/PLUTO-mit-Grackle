@@ -77,6 +77,7 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid, int one_
     int i, j, k, id;
     static int once = 0;
     int def_ini = 0; // (once==0)?1:0;
+    static grackle_field_data grackle_chemistry_fields;
     
     if (one_cell==1) {
         id = 0;
@@ -148,7 +149,6 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid, int one_
 
     double tiny_number = 1.e-20;
     // Create struct for storing grackle field data
-    static grackle_field_data grackle_chemistry_fields;
     if (once==0) gr_initialize_field_data(&grackle_chemistry_fields);
 
     if (once==0) {
