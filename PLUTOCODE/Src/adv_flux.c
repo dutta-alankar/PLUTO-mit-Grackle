@@ -80,6 +80,7 @@ void AdvectFlux (const Sweep *sweep, int beg, int end, Grid *grid)
         phi = ts[X_HI] + ts[X_HII];
     else {
         flux[X_HI] = 0.; flux[X_HII] = 0.;
+	phi = 1.0;
     }    
     if (g_grackle_params.grackle_primordial_chemistry >= 2)
         phi += (ts[X_HM] + ts[X_H2I] + ts[X_H2II]);
@@ -101,6 +102,7 @@ void AdvectFlux (const Sweep *sweep, int beg, int end, Grid *grid)
         phi = ts[Y_HeI] + ts[Y_HeII] + ts[Y_HeIII];
     else {
         flux[Y_HeI] = 0.; flux[Y_HeII] = 0.; flux[Y_HeIII] = 0.;
+	phi = 1.0;
     }
     NIONS_LOOP(nv) {
       if ((nv==Y_HeI) || (nv==Y_HeII) || (nv==Y_HeIII)) {
