@@ -170,15 +170,18 @@ void UpdateStage(Data *d, Data_Arr Uc, Data_Arr Us, double **aflux,
           if (g_grackle_params.grackle_primordial_chemistry==0) {
 	    norm_H  = 1.;
 	    norm_He = 1.;
-	  } else if (g_grackle_params.grackle_primordial_chemistry>=1) {
+	  }
+	  if (g_grackle_params.grackle_primordial_chemistry>=1) {
 	    if (nv==X_HI || nv==X_HII)
 	      norm_H += d->Vc[nv][k][j][i];
 	    if (nv==Y_HeI || nv==Y_HeII || nv==Y_HeIII)
 	      norm_He += d->Vc[nv][k][j][i];
-	  } else if (g_grackle_params.grackle_primordial_chemistry>=2) {
+	  }
+	  if (g_grackle_params.grackle_primordial_chemistry>=2) {
 	    if (nv==X_HM || nv==X_H2I || nv==X_H2II)
               norm_H += d->Vc[nv][k][j][i];
-	  } else if (g_grackle_params.grackle_primordial_chemistry>=3) {
+	  }
+	  if (g_grackle_params.grackle_primordial_chemistry>=3) {
             if (nv==X_DI || nv==X_DII || nv==X_HDI)
               norm_H += d->Vc[nv][k][j][i];
 	  }
@@ -187,32 +190,31 @@ void UpdateStage(Data *d, Data_Arr Uc, Data_Arr Us, double **aflux,
           if (nv==elec || nv==Z_MET) continue;
 	  if (nv==X_HI || nv==X_HII || nv==X_HM || nv==X_H2I || nv==X_H2II || nv==X_DI || nv==X_DII || nv==X_HDI) 
             d->Vc[nv][k][j][i] /= norm_H;
-	  if (nv==Y_HeI || nv==Y_HeII)
+	  if (nv==Y_HeI || nv==Y_HeII || nv==Y_HeIII)
             d->Vc[nv][k][j][i] /= norm_He;
 	}
 	#endif
         NVAR_LOOP(nv) {
 	  stateC->v[*ip][nv] = d->Vc[nv][k][j][i];
           #if COOLING==GRACKLE
+	  if (nv<NFLX || nv>=TRC) continue;
 	  switch (g_grackle_params.grackle_primordial_chemistry) {
 	    case 0:
 	      if (nv>=X_HI && nv<=elec)
                 stateC->v[*ip][nv] = 0.;
 	      break;
 	    case 1:
-	      if (nv>=X_HM && nv<=elec)
+	      if (nv>=X_HM && nv<elec)
 	        stateC->v[*ip][nv] = 0.;
 	      break;
 	    case 2:
-	      if (nv>=X_DI && nv<=elec)
+	      if (nv>=X_DI && nv<elec)
                 stateC->v[*ip][nv] = 0.;
               break;
-	    default:
-	      if (nv==elec)
-	        stateC->v[*ip][nv] = 0.;
           }
-	  if (nv>=X_HI && nv<=Z_MET)
-            stateC->v[*ip][nv] = (stateC->v[*ip][nv]<1.0e-10)?0.:stateC->v[*ip][nv];
+	  // if (nv>=X_HI && nv<elec)
+          //   stateC->v[*ip][nv] = (stateC->v[*ip][nv]<1.0e-10)?0.:stateC->v[*ip][nv];
+	  // if (nv==elec)  stateC->v[*ip][nv] = 0.;
           #endif
 	}
         sweep.flag[*ip] = d->flag[k][j][i];
@@ -309,7 +311,26 @@ CheckNaN (stateR->v, nbeg, nend, "StateR->v");
        ---------------------------------------------------- */
 
       for ((*ip) = nbeg; (*ip) <= nend; (*ip)++) { 
-        NVAR_LOOP(nv) Uc[k][j][i][nv] += sweep.rhs[*ip][nv];
+        NVAR_LOOP(nv) {
+	  Uc[k][j][i][nv] += sweep.rhs[*ip][nv];
+          #if COOLING==GRACKLE
+	   switch (g_grackle_params.grackle_primordial_chemistry) {
+            case 0:
+              if (nv>=X_HI && nv<=elec)
+                Uc[k][j][i][nv] = 0.;
+              break;
+            case 1:
+              if (nv>=X_HM && nv<elec)
+                Uc[k][j][i][nv] = 0.;
+              break;
+            case 2:
+              if (nv>=X_DI && nv<elec)
+                Uc[k][j][i][nv] = 0.;
+              break;
+          }
+	  // if (nv==elec) Uc[k][j][i][nv] = d->Vc[nv][k][j][i]*d->Vc[RHO][k][j][i];
+	  #endif
+	}
       }
       #ifdef CHOMBO
       for ((*ip) = nbeg-1; (*ip) <= nend; (*ip)++){

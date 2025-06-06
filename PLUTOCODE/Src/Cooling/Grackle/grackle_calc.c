@@ -76,16 +76,24 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid, int one_
 {
     int i, j, k, id;
     static int once = 0;
-    int def_ini = 0; // (once==0)?1:0;
     static grackle_field_data grackle_chemistry_fields;
+    static chemistry_data *grackle_config_data;
+    static timeStep *Dts_prev_call = NULL;
+    static int once_cell_prev = 1;
+
+    // This ensures that everything in Grackle is refreshed if one cell or equilibrium was called earlier
+    if (Dts_prev_call==NULL || once_cell_prev==1) once = 0;
+    Dts_prev_call = Dts;
+    once_cell_prev = one_cell;
     
     if (one_cell==1) {
         id = 0;
         once = 0;
-        if (grackle_chemistry_fields.density!=NULL)
-            free_chemistry_data();
     }
-
+    if (once==0 && grackle_chemistry_fields.density!=NULL) {
+        free_chemistry_data();
+    }
+    // if (once==0 && grackle_chemistry_fields.density!=NULL) free_chemistry_data();
     /*********************************************************************
     / Initial setup of units and chemistry objects.
     / This should be done at simulation start.
@@ -106,27 +114,29 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid, int one_
 
     // First, set up the units system.
     // These are conversions from code units to cgs.
-    static code_units grackle_code_units;
-    if (once==0) {
-        grackle_code_units.comoving_coordinates = 0; // 1 if cosmological sim, 0 if not
-        grackle_code_units.density_units = UNIT_DENSITY;
-        grackle_code_units.length_units = UNIT_LENGTH;
-        grackle_code_units.time_units = UNIT_LENGTH/UNIT_VELOCITY;
-        grackle_code_units.a_units = 1.0; // units for the expansion factor
-        // Set expansion factor to 1 for non-cosmological simulation.
-        grackle_code_units.a_value = 1. / (1. + initial_redshift) / grackle_code_units.a_units;
-        set_velocity_units(&grackle_code_units);
-    }
+    code_units grackle_code_units;
+    grackle_code_units.comoving_coordinates = 0; // 1 if cosmological sim, 0 if not
+    grackle_code_units.density_units = UNIT_DENSITY;
+    grackle_code_units.length_units = UNIT_LENGTH;
+    grackle_code_units.time_units = UNIT_LENGTH/UNIT_VELOCITY;
+    grackle_code_units.a_units = 1.0; // units for the expansion factor
+    // Set expansion factor to 1 for non-cosmological simulation.
+    grackle_code_units.a_value = 1. / (1. + initial_redshift) / grackle_code_units.a_units;
+    set_velocity_units(&grackle_code_units);
+
     // Second, create a chemistry object for parameters.  This needs to be a pointer.
-    static chemistry_data *grackle_config_data;
-    if (once==0) grackle_config_data = malloc(sizeof(chemistry_data));
-    if (set_default_chemistry_parameters(grackle_config_data) == 0) {
-        printLog("call_grackle(): Error in set_default_chemistry_parameters.\n");
-        QUIT_PLUTO(1);
+    if (once==0) {
+        if (grackle_config_data==NULL) grackle_config_data = malloc(sizeof(chemistry_data));
+        if (set_default_chemistry_parameters(grackle_config_data) == 0) {
+            printLog("call_grackle(): Error in set_default_chemistry_parameters.\n");
+            QUIT_PLUTO(1);
+        }
     }
     // Set parameter values for chemistry.
     // Access the parameter storage with the struct you've created
     // or with the grackle_config_data pointer declared in grackle.h (see further below).
+    grackle_config_data->max_iterations = 100000000;
+    grackle_config_data->Gamma = g_gamma;
     grackle_config_data->use_grackle = 1;            // chemistry on
     if (Dts!=NULL)
         grackle_config_data->with_radiative_cooling = 1; // cooling on
@@ -142,24 +152,65 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid, int one_
         grackle_config_data->temperature_floor_scalar = (g_grackle_params.grackle_temperature_floor_scalar>0)?g_grackle_params.grackle_temperature_floor_scalar:g_minCoolingTemp;  // temperature floor
 
     // Finally, initialize the chemistry object.
-    if (initialize_chemistry_data(&grackle_code_units) == 0) {
-        printLog("call_grackle(): Error in initialize_chemistry_data.\n");
-        QUIT_PLUTO(1);
+    if (once==0) {
+        if (initialize_chemistry_data(&grackle_code_units) == 0) {
+            printLog("call_grackle(): Error in initialize_chemistry_data.\n");
+            QUIT_PLUTO(1);
+        }
     }
-
     double tiny_number = 1.e-20;
     // Create struct for storing grackle field data
-    if (once==0) gr_initialize_field_data(&grackle_chemistry_fields);
+    if (once==0) {
+        if (grackle_chemistry_fields.grid_dimension!=NULL) FreeArray1D(grackle_chemistry_fields.grid_dimension);
+        if (grackle_chemistry_fields.grid_start!=NULL) FreeArray1D(grackle_chemistry_fields.grid_start);
+        if (grackle_chemistry_fields.grid_end!=NULL) FreeArray1D(grackle_chemistry_fields.grid_end);
+        if (grackle_chemistry_fields.density!=NULL) FreeArray1D(grackle_chemistry_fields.density);
+        if (grackle_chemistry_fields.internal_energy!=NULL) FreeArray1D(grackle_chemistry_fields.internal_energy);
+        if (grackle_chemistry_fields.x_velocity!=NULL) FreeArray1D(grackle_chemistry_fields.x_velocity);
+        if (grackle_chemistry_fields.y_velocity!=NULL) FreeArray1D(grackle_chemistry_fields.y_velocity);
+        if (grackle_chemistry_fields.z_velocity!=NULL) FreeArray1D(grackle_chemistry_fields.z_velocity);
+        if (grackle_config_data->primordial_chemistry >= 1) {
+            if (grackle_chemistry_fields.HI_density!=NULL) FreeArray1D(grackle_chemistry_fields.HI_density);
+            if (grackle_chemistry_fields.HII_density!=NULL) FreeArray1D(grackle_chemistry_fields.HII_density);
+            if (grackle_chemistry_fields.HeI_density!=NULL) FreeArray1D(grackle_chemistry_fields.HeI_density);
+            if (grackle_chemistry_fields.HeII_density!=NULL) FreeArray1D(grackle_chemistry_fields.HeII_density);
+            if (grackle_chemistry_fields.HeIII_density!=NULL) FreeArray1D(grackle_chemistry_fields.HeIII_density);
+            if (grackle_chemistry_fields.e_density!=NULL) FreeArray1D(grackle_chemistry_fields.e_density);
+	}
+        if (grackle_config_data->primordial_chemistry >= 2) {
+            if (grackle_chemistry_fields.HM_density!=NULL) FreeArray1D(grackle_chemistry_fields.HM_density);
+            if (grackle_chemistry_fields.H2I_density!=NULL) FreeArray1D(grackle_chemistry_fields.H2I_density);
+            if (grackle_chemistry_fields.H2II_density!=NULL) FreeArray1D(grackle_chemistry_fields.H2II_density);
+	}
+        if (grackle_config_data->primordial_chemistry >= 3) {
+            if (grackle_chemistry_fields.DI_density!=NULL) FreeArray1D(grackle_chemistry_fields.DI_density);
+            if (grackle_chemistry_fields.DII_density!=NULL) FreeArray1D(grackle_chemistry_fields.DII_density);
+            if (grackle_chemistry_fields.HDI_density!=NULL) FreeArray1D(grackle_chemistry_fields.HDI_density);
+	}
+        if (grackle_config_data->metal_cooling == 1) 
+            if (grackle_chemistry_fields.metal_density!=NULL) FreeArray1D(grackle_chemistry_fields.metal_density);
+        if (grackle_chemistry_fields.volumetric_heating_rate!=NULL) FreeArray1D(grackle_chemistry_fields.volumetric_heating_rate);
+        if (grackle_chemistry_fields.specific_heating_rate!=NULL) FreeArray1D(grackle_chemistry_fields.specific_heating_rate);
+        if (grackle_chemistry_fields.RT_HI_ionization_rate!=NULL) FreeArray1D(grackle_chemistry_fields.RT_HI_ionization_rate);
+        if (grackle_chemistry_fields.RT_HeI_ionization_rate!=NULL) FreeArray1D(grackle_chemistry_fields.RT_HeI_ionization_rate);
+        if (grackle_chemistry_fields.RT_HeII_ionization_rate!=NULL) FreeArray1D(grackle_chemistry_fields.RT_HeII_ionization_rate);
+        if (grackle_chemistry_fields.RT_H2_dissociation_rate!=NULL) FreeArray1D(grackle_chemistry_fields.RT_H2_dissociation_rate);
+        if (grackle_chemistry_fields.RT_heating_rate!=NULL) FreeArray1D(grackle_chemistry_fields.RT_heating_rate);
+        gr_initialize_field_data(&grackle_chemistry_fields);
+    }
 
     if (once==0) {
         // Set grid dimension and size.
         // grid_start and grid_end are used to ignore ghost zones.
         // int field_size = 1;
         grackle_chemistry_fields.grid_rank = 3;
-        grackle_chemistry_fields.grid_dimension = ARRAY_1D(grackle_chemistry_fields.grid_rank, int);
-        grackle_chemistry_fields.grid_start = ARRAY_1D(grackle_chemistry_fields.grid_rank, int);
-        grackle_chemistry_fields.grid_end = ARRAY_1D(grackle_chemistry_fields.grid_rank, int);
-        grackle_chemistry_fields.grid_dx = MAX(MAX(grid->dx[KDIR][1], grid->dx[JDIR][1]), grid->dx[IDIR][1]); // used only for H2 self-shielding approximation
+        if (grackle_chemistry_fields.grid_dimension==NULL)
+            grackle_chemistry_fields.grid_dimension = ARRAY_1D(grackle_chemistry_fields.grid_rank, int);
+        if (grackle_chemistry_fields.grid_start==NULL)    
+            grackle_chemistry_fields.grid_start = ARRAY_1D(grackle_chemistry_fields.grid_rank, int);
+        if (grackle_chemistry_fields.grid_end==NULL)    
+            grackle_chemistry_fields.grid_end = ARRAY_1D(grackle_chemistry_fields.grid_rank, int);
+        grackle_chemistry_fields.grid_dx = -1; // MAX(MAX(grid->dx[KDIR][1], grid->dx[JDIR][1]), grid->dx[IDIR][1]); // used only for H2 self-shielding approximation
     }
     
     for (i = 0; i < 3; i++) {
@@ -183,20 +234,19 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid, int one_
             grackle_chemistry_fields.HeII_density    = ARRAY_1D((one_cell==0)?(grid->np_int[KDIR] * grid->np_int[JDIR] * grid->np_int[IDIR]):1, gr_float);
             grackle_chemistry_fields.HeIII_density   = ARRAY_1D((one_cell==0)?(grid->np_int[KDIR] * grid->np_int[JDIR] * grid->np_int[IDIR]):1, gr_float);
             grackle_chemistry_fields.e_density       = ARRAY_1D((one_cell==0)?(grid->np_int[KDIR] * grid->np_int[JDIR] * grid->np_int[IDIR]):1, gr_float);
-	    }
+	}
         if (grackle_config_data->primordial_chemistry >= 2) {
             grackle_chemistry_fields.HM_density      = ARRAY_1D((one_cell==0)?(grid->np_int[KDIR] * grid->np_int[JDIR] * grid->np_int[IDIR]):1, gr_float);
             grackle_chemistry_fields.H2I_density     = ARRAY_1D((one_cell==0)?(grid->np_int[KDIR] * grid->np_int[JDIR] * grid->np_int[IDIR]):1, gr_float);
             grackle_chemistry_fields.H2II_density    = ARRAY_1D((one_cell==0)?(grid->np_int[KDIR] * grid->np_int[JDIR] * grid->np_int[IDIR]):1, gr_float);
-	    }
+	}
         if (grackle_config_data->primordial_chemistry >= 3) {
             grackle_chemistry_fields.DI_density      = ARRAY_1D((one_cell==0)?(grid->np_int[KDIR] * grid->np_int[JDIR] * grid->np_int[IDIR]):1, gr_float);
             grackle_chemistry_fields.DII_density     = ARRAY_1D((one_cell==0)?(grid->np_int[KDIR] * grid->np_int[JDIR] * grid->np_int[IDIR]):1, gr_float);
             grackle_chemistry_fields.HDI_density     = ARRAY_1D((one_cell==0)?(grid->np_int[KDIR] * grid->np_int[JDIR] * grid->np_int[IDIR]):1, gr_float);
-	    }
-        if (grackle_config_data->metal_cooling == 1) 
+	}
+        if (grackle_config_data->metal_cooling == 1)
             grackle_chemistry_fields.metal_density   = ARRAY_1D((one_cell==0)?(grid->np_int[KDIR] * grid->np_int[JDIR] * grid->np_int[IDIR]):1, gr_float);
-
         // volumetric heating rate (provide in units [erg s^-1 cm^-3])
         grackle_chemistry_fields.volumetric_heating_rate = ARRAY_1D((one_cell==0)?(grid->np_int[KDIR] * grid->np_int[JDIR] * grid->np_int[IDIR]):1, gr_float);
         // specific heating rate (provide in units [egs s^-1 g^-1]
@@ -226,30 +276,30 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid, int one_
         }
         // printLog("DEBUG: (k, j, i, id) = (%d, %d, %d, %d) \n", k, j, i, id);
         if (once==0 || one_cell==1) normalize_ions_grackle(d, grackle_config_data, i, j, k);
-	grackle_chemistry_fields.density[id] = (gr_float)d->Vc[RHO][k][j][i];
+	    grackle_chemistry_fields.density[id] = (gr_float)d->Vc[RHO][k][j][i];
         if (grackle_config_data->primordial_chemistry >= 1) {
-            grackle_chemistry_fields.HI_density[id] = (gr_float)((def_ini==1)?tiny_number:d->Vc[X_HI][k][j][i]) * grackle_config_data->HydrogenFractionByMass * grackle_chemistry_fields.density[id];
-            grackle_chemistry_fields.HII_density[id] = (gr_float)((def_ini==1)?1.0:d->Vc[X_HII][k][j][i]) * grackle_config_data->HydrogenFractionByMass * grackle_chemistry_fields.density[id];
-            grackle_chemistry_fields.HeI_density[id] = (gr_float)((def_ini==1)?tiny_number:d->Vc[Y_HeI][k][j][i]) * (1-grackle_config_data->HydrogenFractionByMass)  * grackle_chemistry_fields.density[id];
-            grackle_chemistry_fields.HeII_density[id] = (gr_float)((def_ini==1)?tiny_number:d->Vc[Y_HeII][k][j][i]) * (1-grackle_config_data->HydrogenFractionByMass) * grackle_chemistry_fields.density[id];
-            grackle_chemistry_fields.HeIII_density[id] = (gr_float)((def_ini==1)?1.0:d->Vc[Y_HeIII][k][j][i]) * (1-grackle_config_data->HydrogenFractionByMass) * grackle_chemistry_fields.density[id];
+            grackle_chemistry_fields.HI_density[id] = (gr_float)(d->Vc[X_HI][k][j][i]) * grackle_config_data->HydrogenFractionByMass * grackle_chemistry_fields.density[id];
+            grackle_chemistry_fields.HII_density[id] = (gr_float)(d->Vc[X_HII][k][j][i]) * grackle_config_data->HydrogenFractionByMass * grackle_chemistry_fields.density[id];
+            grackle_chemistry_fields.HeI_density[id] = (gr_float)(d->Vc[Y_HeI][k][j][i]) * (1-grackle_config_data->HydrogenFractionByMass)  * grackle_chemistry_fields.density[id];
+            grackle_chemistry_fields.HeII_density[id] = (gr_float)(d->Vc[Y_HeII][k][j][i]) * (1-grackle_config_data->HydrogenFractionByMass) * grackle_chemistry_fields.density[id];
+            grackle_chemistry_fields.HeIII_density[id] = (gr_float)(d->Vc[Y_HeIII][k][j][i]) * (1-grackle_config_data->HydrogenFractionByMass) * grackle_chemistry_fields.density[id];
             grackle_chemistry_fields.e_density[id] = (grackle_chemistry_fields.HII_density[id] + (grackle_chemistry_fields.HeII_density[id] + 2*grackle_chemistry_fields.HeIII_density[id])/4);  
 	        // grackle_chemistry_fields.e_density[id] = (gr_float)d->Vc[elec][k][j][i];
 	    // normalization: see https://grackle.readthedocs.io/en/latest/Interaction.html#density-note
         }
         if (grackle_config_data->primordial_chemistry >= 2) {
-            grackle_chemistry_fields.HM_density[id] = (gr_float)((def_ini==1)?tiny_number:d->Vc[X_HM][k][j][i]) * grackle_config_data->HydrogenFractionByMass * grackle_chemistry_fields.density[id];
-            grackle_chemistry_fields.H2I_density[id] = (gr_float)((def_ini==1)?tiny_number:d->Vc[X_H2I][k][j][i]) * grackle_config_data->HydrogenFractionByMass * grackle_chemistry_fields.density[id];
-            grackle_chemistry_fields.H2II_density[id] = (gr_float)((def_ini==1)?tiny_number:d->Vc[X_H2II][k][j][i]) * grackle_config_data->HydrogenFractionByMass * grackle_chemistry_fields.density[id];
+            grackle_chemistry_fields.HM_density[id] = (gr_float)(d->Vc[X_HM][k][j][i]) * grackle_config_data->HydrogenFractionByMass * grackle_chemistry_fields.density[id];
+            grackle_chemistry_fields.H2I_density[id] = (gr_float)(d->Vc[X_H2I][k][j][i]) * grackle_config_data->HydrogenFractionByMass * grackle_chemistry_fields.density[id];
+            grackle_chemistry_fields.H2II_density[id] = (gr_float)(d->Vc[X_H2II][k][j][i]) * grackle_config_data->HydrogenFractionByMass * grackle_chemistry_fields.density[id];
         }
         if (grackle_config_data->primordial_chemistry >= 3) {
-            grackle_chemistry_fields.DI_density[id] = (gr_float)((def_ini==1)?tiny_number:d->Vc[X_DI][k][j][i]) * grackle_config_data->HydrogenFractionByMass * grackle_chemistry_fields.density[id];
-            grackle_chemistry_fields.DII_density[id] = (gr_float)((def_ini==1)?(2.0 * 3.4e-05):d->Vc[X_DII][k][j][i]) * grackle_config_data->HydrogenFractionByMass * grackle_chemistry_fields.density[id];
-            grackle_chemistry_fields.HDI_density[id] = (gr_float)((def_ini==1)?tiny_number:d->Vc[X_HDI][k][j][i]) * grackle_config_data->HydrogenFractionByMass * grackle_chemistry_fields.density[id];
+            grackle_chemistry_fields.DI_density[id] = (gr_float)(d->Vc[X_DI][k][j][i]) * grackle_config_data->HydrogenFractionByMass * grackle_chemistry_fields.density[id];
+            grackle_chemistry_fields.DII_density[id] = (gr_float)(d->Vc[X_DII][k][j][i]) * grackle_config_data->HydrogenFractionByMass * grackle_chemistry_fields.density[id];
+            grackle_chemistry_fields.HDI_density[id] = (gr_float)(d->Vc[X_HDI][k][j][i]) * grackle_config_data->HydrogenFractionByMass * grackle_chemistry_fields.density[id];
         }
         // solar metallicity
         if (grackle_config_data->metal_cooling == 1) 
-            grackle_chemistry_fields.metal_density[id] = (gr_float)((def_ini==1)?1.0:d->Vc[Z_MET][k][j][i]) * grackle_config_data->SolarMetalFractionByMass * grackle_chemistry_fields.density[id];
+            grackle_chemistry_fields.metal_density[id] = (gr_float)(d->Vc[Z_MET][k][j][i]) * grackle_config_data->SolarMetalFractionByMass * grackle_chemistry_fields.density[id];
 
         grackle_chemistry_fields.x_velocity[id] = (gr_float)d->Vc[VX1][k][j][i];
         grackle_chemistry_fields.y_velocity[id] = (gr_float)d->Vc[VX2][k][j][i];
@@ -257,7 +307,13 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid, int one_
 
         // initilize specific internal thermal energy
         grackle_chemistry_fields.internal_energy[id] = (gr_float)((d->Vc[PRS][k][j][i]/d->Vc[RHO][k][j][i])/(g_gamma-1));
-        // printLog("DEBUG: (k,j,i)=(%d,%d,%d) T = %e, P/rho = %e  P=%e  rho=%e\n", k, j, i, d->Vc[TEMP][k][j][i], (gr_float)((d->Vc[PRS][k][j][i]/d->Vc[RHO][k][j][i])/(g_gamma-1)), d->Vc[PRS][k][j][i], d->Vc[RHO][k][j][i] );
+        /*
+        if (grackle_config_data->with_radiative_cooling != 0)
+            grackle_chemistry_fields.internal_energy[id] = (gr_float)((d->Vc[PRS][k][j][i]/d->Vc[RHO][k][j][i])/(g_gamma-1));
+        else
+            grackle_chemistry_fields.internal_energy[id] = (gr_float)(d->Vgrac[TEMP][k][j][i]/(temperature_units*(g_gamma-1)));
+        */
+        // printLog("DEBUG: (k,j,i)=(%d,%d,%d) T = %e, P/rho = %e  P=%e  rho=%e\n", k, j, i, d->Vgrac[TEMP][k][j][i], (gr_float)((d->Vc[PRS][k][j][i]/d->Vc[RHO][k][j][i])/(g_gamma-1)), d->Vc[PRS][k][j][i], d->Vc[RHO][k][j][i] );
 
         grackle_chemistry_fields.volumetric_heating_rate[id] = 0.0;
         grackle_chemistry_fields.specific_heating_rate[id] = 0.0;
@@ -283,15 +339,16 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid, int one_
 
     // Calculate cooling time.
     static gr_float *cooling_time;
-    if (once==0)
+    if (once==0 && Dts!=NULL) {
+        if (cooling_time!=NULL) FreeArray1D(cooling_time);
         cooling_time = ARRAY_1D((one_cell==0)?(grid->np_int[KDIR] * grid->np_int[JDIR] * grid->np_int[IDIR]):1, gr_float);
+    }
     if (Dts!=NULL) {
         if (calculate_cooling_time(&grackle_code_units, &grackle_chemistry_fields,
                                 cooling_time) == 0) {
             printLog("call_grackle(): Error in calculate_cooling_time.\n");
             QUIT_PLUTO(1);
         }
-
         double cool_time_min = 1.0e+30;
         DOM_LOOP(k, j, i) {
             id = (k-grid->lbeg[KDIR]) * grid->np_int[JDIR] * grid->np_int[IDIR] + (j-grid->lbeg[JDIR]) * grid->np_int[IDIR] + (i-grid->lbeg[IDIR]);
@@ -302,8 +359,10 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid, int one_
     }
     // Calculate temperature in K.
     static gr_float *temperature;
-    if (once==0)
+    if (once==0) {
+        if (temperature!=NULL) FreeArray1D(temperature);
         temperature = ARRAY_1D((one_cell==0)?(grid->np_int[KDIR] * grid->np_int[JDIR] * grid->np_int[IDIR]):1, gr_float);
+    }
     if (calculate_temperature(&grackle_code_units, &grackle_chemistry_fields,
                               temperature) == 0) {
         printLog("call_grackle(): Error in calculate_temperature.\n");
@@ -315,8 +374,10 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid, int one_
     // Calculate pressure.
     static gr_float *pressure;
     double pressure_units = grackle_code_units.density_units * pow(grackle_code_units.velocity_units, 2);
-    if (once==0)
+    if (once==0 && Dts!=NULL) {
+        if (pressure!=NULL) FreeArray1D(pressure);
         pressure = ARRAY_1D((one_cell==0)?(grid->np_int[KDIR] * grid->np_int[JDIR] * grid->np_int[IDIR]):1, gr_float);
+    }
     if (Dts!=NULL) {
         if (calculate_pressure(&grackle_code_units, &grackle_chemistry_fields,
                             pressure) == 0) {
@@ -328,7 +389,7 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid, int one_
     counter = 0;
     DOM_LOOP(k, j, i) {
         // if (count == 0)
-        //     printLog("> step %d: lambda = %24.16e erg cm^3 s^-1\n", g_stepNumber, CONST_kB*d->Vc[TEMP][k][j][i]/((d->Vc[RHO][k][j][i]*UNIT_DENSITY/(d->Vc[MU][k][j][i]*CONST_mp))*fabs(cool_time_min) * grackle_code_units.time_units)/(g_gamma-1) );
+        //     printLog("> step %d: lambda = %24.16e erg cm^3 s^-1\n", g_stepNumber, CONST_kB*d->Vgrac[TEMP][k][j][i]/((d->Vc[RHO][k][j][i]*UNIT_DENSITY/(d->Vgrac[MU][k][j][i]*CONST_mp))*fabs(cool_time_min) * grackle_code_units.time_units)/(g_gamma-1) );
         // count++;
         if (one_cell==0)
             id = (k-grid->lbeg[KDIR]) * grid->np_int[JDIR] * grid->np_int[IDIR] + (j-grid->lbeg[JDIR]) * grid->np_int[IDIR] + (i-grid->lbeg[IDIR]);
@@ -338,16 +399,13 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid, int one_
             j = cell_j;
             k = cell_k;
         }
-        if ((temperature[id])>g_minCoolingTemp) {
-            // printLog("> step %d t=%e, dt=%e, before: prs/kB = %e, temp = %e, mu=%f\n", g_stepNumber, g_time, g_dt, (d->Vc[PRS][k][j][i]*UNIT_DENSITY*pow(UNIT_VELOCITY,2))/CONST_kB, d->Vc[TEMP][k][j][i], d->Vc[MU][k][j][i]);
-            if (Dts!=NULL) d->Vc[PRS][k][j][i] = pressure[id];
-            d->Vc[TEMP][k][j][i] = temperature[id];
-            if (one_cell==0)
-                MeanMolecularWeight(d, grid);
-            else
-                d->Vc[MU][k][j][i] = (d->Vc[RHO][k][j][i]*UNIT_DENSITY)/(d->Vc[PRS][k][j][i]*UNIT_DENSITY*pow(UNIT_VELOCITY, 2))*(CONST_kB/CONST_mp)*d->Vc[TEMP][k][j][i];
+        // printLog("> step %d t=%e, dt=%e, before: prs/kB = %e, temp = %e, mu=%f\n", g_stepNumber, g_time, g_dt, (d->Vc[PRS][k][j][i]*UNIT_DENSITY*pow(UNIT_VELOCITY,2))/CONST_kB, d->Vgrac[TEMP][k][j][i], d->Vgrac[MU][k][j][i]);
+        if (Dts!=NULL) d->Vc[PRS][k][j][i] = pressure[id];
+        d->Vgrac[TEMP][k][j][i] = temperature[id];
+        if (one_cell==1)
+            d->Vgrac[MU][k][j][i] = (d->Vc[RHO][k][j][i]*UNIT_DENSITY)/(d->Vc[PRS][k][j][i]*UNIT_DENSITY*pow(UNIT_VELOCITY, 2))*(CONST_kB/CONST_mp)*d->Vgrac[TEMP][k][j][i];
 
-	    if (grackle_config_data->primordial_chemistry >= 1) {
+        if (grackle_config_data->primordial_chemistry >= 1) {
             d->Vc[X_HI][k][j][i]    = grackle_chemistry_fields.HI_density[id]/(grackle_config_data->HydrogenFractionByMass * grackle_chemistry_fields.density[id]);
             d->Vc[X_HII][k][j][i]   = grackle_chemistry_fields.HII_density[id]/(grackle_chemistry_fields.density[id] * grackle_config_data->HydrogenFractionByMass);
             d->Vc[Y_HeI][k][j][i]   = grackle_chemistry_fields.HeI_density[id]/(grackle_chemistry_fields.density[id] * (1-grackle_config_data->HydrogenFractionByMass));
@@ -370,15 +428,11 @@ void call_grackle (const Data *d, double dt, timeStep *Dts, Grid *grid, int one_
         if (grackle_config_data->metal_cooling == 1) 
             d->Vc[Z_MET][k][j][i] = grackle_chemistry_fields.metal_density[id]/(grackle_chemistry_fields.density[id]*grackle_config_data->SolarMetalFractionByMass);
 
-            // printLog("> step %d t=%e, dt=%e,  after: prs/kB = %e, temp = %e, mu=%f\n", g_stepNumber, g_time, g_dt, (d->Vc[PRS][k][j][i]*UNIT_DENSITY*pow(UNIT_VELOCITY,2))/CONST_kB, d->Vc[TEMP][k][j][i], d->Vc[MU][k][j][i]);
-        }
-        else {
-            // d->Vc[TEMP][k][j][i] = g_minCoolingTemp;
-            // d->Vc[PRS][k][j][i]  = (d->Vc[RHO][k][j][i]/(d->Vc[MU][k][j][i]*CONST_mp))*g_minCoolingTemp;
-        }
+        // printLog("> step %d t=%e, dt=%e,  after: prs/kB = %e, temp = %e, mu=%f\n", g_stepNumber, g_time, g_dt, (d->Vc[PRS][k][j][i]*UNIT_DENSITY*pow(UNIT_VELOCITY,2))/CONST_kB, d->Vgrac[TEMP][k][j][i], d->Vgrac[MU][k][j][i]);
         counter++;
     }
-
+    if (one_cell==0)
+        MeanMolecularWeight(d, grid);
     // printLog(stdout, "pressure = %24.16g dyne/cm^2\n", pressure[1][1][1]*pressure_units);
 
     /*

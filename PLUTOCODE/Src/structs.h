@@ -546,6 +546,7 @@ typedef struct Data_{
                          \f$x_2\f$ and \f$x_1\f$ direction. */
   double ****Vuser; /**< Array storing user-defined supplementary variables 
                          written to disk. */ 
+  double ****Vgrac; /**< Array storing extra grackle fields. */
   double ***Ax1;    /**< Vector potential comp. in the \f$x_1\f$ dir.*/
   double ***Ax2;    /**< Vector potential comp. in the \f$x_2\f$ dir.*/
   double ***Ax3;    /**< Vector potential comp. in the \f$x_3\f$ dir.*/

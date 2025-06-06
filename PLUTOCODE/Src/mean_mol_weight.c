@@ -124,7 +124,7 @@ double MeanMolecularWeight(double *v, double oth_mu[4])
 void MeanMolecularWeight(const Data *d, Grid *grid) {
     int k, j, i;
     DOM_LOOP(k, j, i) {
-        d->Vc[MU][k][j][i] = (d->Vc[RHO][k][j][i]*UNIT_DENSITY)/(d->Vc[PRS][k][j][i]*UNIT_DENSITY*pow(UNIT_VELOCITY, 2))*(CONST_kB/CONST_mp)*d->Vc[TEMP][k][j][i];
+        d->Vgrac[MU][k][j][i] = (d->Vc[RHO][k][j][i]*UNIT_DENSITY)/(d->Vc[PRS][k][j][i]*UNIT_DENSITY*pow(UNIT_VELOCITY, 2))*(CONST_kB/CONST_mp)*d->Vgrac[TEMP][k][j][i];
     }
 }
 #else
