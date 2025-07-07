@@ -1,4 +1,10 @@
 pluto
+*.dbl
+*.flt
+*.dbl.*
+*.flt.*
+outputs/*
+logs/*
 
 ##### Windows
 # Windows thumbnail cache files

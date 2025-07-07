@@ -83,28 +83,31 @@ void InitDomain (Data *d, Grid *grid)
     d->Vc[VX2][k][j][i] = 0.;
     d->Vc[VX3][k][j][i] = 0.;
     #if COOLING==GRACKLE
+    d->Vgrac[TEMP][k][j][i] = (d->Vc[PRS][k][j][i]/d->Vc[RHO][k][j][i])*(0.609*CONST_mp/CONST_kB)*pow(UNIT_VELOCITY, 2);
+    d->Vgrac[MU][k][j][i] = 0.609;
     double tiny_number = 1.e-20;
-    double XH_mass = 0.715768377353088514;
-    double ZmetSol_mass = 0.01295; 
-    d->Vc[TEMP][k][j][i] = g_inputParam[TINI];
-    d->Vc[MU][k][j][i] = 0.609;
     NIONS_LOOP(nv) d->Vc[nv][k][j][i] = 0;
     d->Vc[X_HI][k][j][i]     = tiny_number;
-    d->Vc[X_HII][k][j][i]    = XH_mass;
+    d->Vc[X_HII][k][j][i]    = 1.0;
     d->Vc[Y_HeI][k][j][i]    = tiny_number;
     d->Vc[Y_HeII][k][j][i]   = tiny_number;
-    d->Vc[Y_HeIII][k][j][i]  = (1-XH_mass);
+    d->Vc[Y_HeIII][k][j][i]  = 1.0;
     d->Vc[X_HM][k][j][i]     = tiny_number;
     d->Vc[X_H2I][k][j][i]    = tiny_number;
     d->Vc[X_H2II][k][j][i]   = tiny_number;
     d->Vc[X_DI][k][j][i]     = tiny_number;
     d->Vc[X_DII][k][j][i]    = 2.0 * 3.4e-05;
     d->Vc[X_HDI][k][j][i]    = tiny_number;
+    /*
     d->Vc[elec][k][j][i]     = (d->Vc[X_HII][k][j][i] + d->Vc[X_DII][k][j][i] + 
 	                           (d->Vc[Y_HeII][k][j][i]+2*d->Vc[Y_HeIII][k][j][i])/4.)*d->Vc[RHO][k][j][i];
-    d->Vc[Z_MET][k][j][i]    = 1.0;
+    */
+    d->Vc[Z_MET][k][j][i]    = g_inputParam[METAL];
     #endif
   }
+  #if COOLING==GRACKLE
+  call_grackle_equil(d, grid);
+  #endif
 }
 
 /* ********************************************************************* */
@@ -117,6 +120,7 @@ void Analysis (const Data *d, Grid *grid)
  *
  *********************************************************************** */
 {
+  #if COOLING==GRACKLE
   int k, j, i;
   
   double temp = 0., mass = 0., energy = 0., vol = 0.;
@@ -128,7 +132,7 @@ void Analysis (const Data *d, Grid *grid)
     energy_old = (d->Vc[PRS][0][0][0]/d->Vc[RHO][0][0][0])/(g_gamma-1);
   }
   DOM_LOOP(k, j, i) {
-    temp   += (d->Vc[RHO][k][j][i]*d->Vc[TEMP][k][j][i]*grid->dV[k][j][i]);
+    temp   += (d->Vc[RHO][k][j][i]*d->Vgrac[TEMP][k][j][i]*grid->dV[k][j][i]);
     mass   += (d->Vc[RHO][k][j][i]*grid->dV[k][j][i]);
     energy += (d->Vc[PRS][k][j][i]*grid->dV[k][j][i]/(g_gamma-1));
     vol    += grid->dV[k][j][i];
@@ -180,6 +184,7 @@ void Analysis (const Data *d, Grid *grid)
     fclose(fp);
   }
   /* --- end of writing "analyis.dat" file --- */
+  #endif
 }
 #if PHYSICS == MHD
 /* ********************************************************************* */
