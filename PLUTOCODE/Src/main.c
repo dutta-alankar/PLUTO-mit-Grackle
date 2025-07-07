@@ -210,7 +210,9 @@ int main (int argc, char *argv[])
     if (cmd_line.jet != -1) SetJetDomain (&data, cmd_line.jet, runtime.log_freq, grd); 
     err = Integrate (&data, &Dts, grd);
     if (cmd_line.jet != -1) UnsetJetDomain (&data, cmd_line.jet, grd);
-    Boundary (&data, ALL_DIR, grd);
+    #if INTERNAL_BOUNDARY == YES
+    UserDefBoundary (&data, NULL, 0, grd);
+    #endif
 
   /* ----------------------------------------------------
      1e. Integration didn't go through. Step must

@@ -7,7 +7,7 @@
 #define  TIME_STEPPING                  RK2
 #define  NTRACER                        0
 #define  PARTICLES                      NO
-#define  USER_DEF_PARAMETERS            1
+#define  USER_DEF_PARAMETERS            2
 
 /* -- physics dependent declarations -- */
 
@@ -21,9 +21,10 @@
 /* -- user-defined parameters (labels) -- */
 
 #define  TINI                           0
+#define  METAL                          1
 
 /* [Beg] user-defined constants (do not change this line) */
-#define  UNIT_DENSITY                   (1.0e-03*0.609*CONST_mp)
+#define  UNIT_DENSITY                   (1.0e-02*0.609*CONST_mp)
 #define  UNIT_LENGTH                    CONST_pc
 #define  UNIT_VELOCITY                  1.0e+05
 

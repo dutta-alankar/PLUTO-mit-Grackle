@@ -6,7 +6,7 @@
 
 pluto:                              # Default target
 
-ARCH         = Linux.gcc.defs
+ARCH         = Linux.mpicc.defs
 PLUTO_DIR    = /freya/ptmp/mpa/adutt/pluto-mit-grackle/cooling-example/PLUTOCODE
 SRC          = $(PLUTO_DIR)/Src
 INCLUDE_DIRS = -I. -I$(SRC)

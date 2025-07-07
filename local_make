@@ -8,10 +8,10 @@ ifeq ($(strip $(PARALLEL)), FALSE)
  INCLUDE_DIRS += -I/mpcdf/soft/SLE_15/packages/skylake/hdf5/gcc_11-11.2.0/1.14.1/include
 endif
 
- CFLAGS       += -O3 -DUSE_HDF5 # -DH5_USE_16_API
+ CFLAGS       += -DUSE_HDF5 # -DH5_USE_16_API
  OBJ          += hdf5_io.o
 
- # CFLAGS       += -g # -DNO_COOL_LIMIT
+ CFLAGS       += -g # -DNO_COOL_LIMIT
 
  # CFLAGS      += -DUSE_PNG
  # LDFLAGS     += -L$(PNG_LIB)/lib -lpng
