@@ -83,7 +83,7 @@ void InitDomain (Data *d, Grid *grid)
     d->Vc[VX2][k][j][i] = 0.;
     d->Vc[VX3][k][j][i] = 0.;
     #if COOLING==GRACKLE
-    d->Vgrac[TEMP][k][j][i] = (d->Vc[PRS][k][j][i]/d->Vc[RHO][k][j][i])*(0.609*CONST_mp/CONST_kB)*pow(UNIT_VELOCITY, 2);
+    d->Vgrac[TEMP][k][j][i] = g_inputParam[TINI]; // (d->Vc[PRS][k][j][i]/d->Vc[RHO][k][j][i])*(0.609*CONST_mp/CONST_kB)*pow(UNIT_VELOCITY, 2);
     d->Vgrac[MU][k][j][i] = 0.609;
     double tiny_number = 1.e-20;
     NIONS_LOOP(nv) d->Vc[nv][k][j][i] = 0;
