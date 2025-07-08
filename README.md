@@ -10,7 +10,7 @@ Details of the test:
 - Set velocity in the positive x-direction by 1 code unit with periodic boundary to test the flux of ions.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/739840b2-1a82-4b7d-8b1b-eaf31af46442">
-  <img alt="" src="https://github.com/dutta-alankar/PLUTO-mit-Grackle/blob/31ad1a410f2d141100b155f66631a9f60c571d2e/cooling-function.png">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/aa3e5a9c-0f19-4d26-8392-ed94a73d47dd">
+  <img alt="" src="https://github.com/user-attachments/assets/f6c64fdd-1a2f-48f6-ae8f-3c52e91a7c8d">
 </picture>
 
