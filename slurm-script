@@ -3,10 +3,10 @@
 # Standard output and error:
 #SBATCH -o ./tjob.%x.out.%j
 #SBATCH -e ./tjob.%x.err.%j
-#SBATCH --job-name="CC-grac"
+#SBATCH --job-name="cool-test"
 #
 # Number of nodes and MPI tasks per node:
-#SBATCH --nodes=1
+#SBATCH --nodes=2
 #SBATCH --ntasks-per-node=40
 #
 #SBATCH --mail-type=NONE

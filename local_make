@@ -28,6 +28,6 @@ ifeq ($(strip $(PARALLEL)), TRUE)
 endif
 
 ifeq ($(strip $(PARALLEL)), FALSE)
- LDFLAGS      += -L/freya/ptmp/mpa/adutt/pluto-mit-grackle/grackle-install/gcc_11-11.2.0/lib64 -lgrackle
  INCLUDE_DIRS += -I/freya/ptmp/mpa/adutt/pluto-mit-grackle/grackle-install/gcc_11-11.2.0/include
+ LDFLAGS      += -L/freya/ptmp/mpa/adutt/pluto-mit-grackle/grackle-install/gcc_11-11.2.0/lib64 -lgrackle
 endif
