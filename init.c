@@ -123,7 +123,7 @@ void Analysis (const Data *d, Grid *grid)
   #if COOLING==GRACKLE
   int k, j, i;
   
-  double temp = 0., mass = 0., energy = 0., vol = 0.;
+  double temp = 0., mass = 0., energy = 0., vol = 0., mu=0.;
   static double energy_old = 0.;
   static double temperature_old = 0.;
   static double time_old = 0.;
@@ -133,21 +133,25 @@ void Analysis (const Data *d, Grid *grid)
   }
   DOM_LOOP(k, j, i) {
     temp   += (d->Vc[RHO][k][j][i]*d->Vgrac[TEMP][k][j][i]*grid->dV[k][j][i]);
+    mu     += (d->Vc[RHO][k][j][i]*d->Vgrac[MU][k][j][i]*grid->dV[k][j][i]);
     mass   += (d->Vc[RHO][k][j][i]*grid->dV[k][j][i]);
     energy += (d->Vc[PRS][k][j][i]*grid->dV[k][j][i]/(g_gamma-1));
     vol    += grid->dV[k][j][i];
   }
   #ifdef PARALLEL
-  int transfer_size = 4;
+  int transfer_size = 5;
   int transfer = 0;
   double sendArray[transfer_size], recvArray[transfer_size];
   sendArray[transfer++] = temp; sendArray[transfer++] = mass; sendArray[transfer++] = energy; sendArray[transfer++] = vol;
+  sendArray[transfer++] = mu;
   MPI_Allreduce (sendArray, recvArray, transfer_size, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   transfer = 0;
   temp = recvArray[transfer++]; mass = recvArray[transfer++]; energy = recvArray[transfer++]; vol = recvArray[transfer++];
+  mu = recvArray[transfer++];
   #endif
   double T_avg = temp/mass;
   double energy_avg = energy/vol;
+  double mu_avg = mu/mass;
   double dE = 0., dT = 0.;
   double lambda = 0.;
   if (g_stepNumber>0) {
@@ -155,8 +159,8 @@ void Analysis (const Data *d, Grid *grid)
     dT = T_avg - temperature_old;
     double derv = dE/(g_time-time_old);
     derv = derv * UNIT_DENSITY * pow(UNIT_VELOCITY, 3) * pow(UNIT_LENGTH, -1);
-    double ndens = (mass/vol)*UNIT_DENSITY/(0.609*CONST_mp);
-    double nH = ndens*0.609*0.71;
+    double ndens = (mass/vol)*UNIT_DENSITY/(mu_avg*CONST_mp);
+    double nH = ndens*mu_avg*0.71;
     lambda = -derv/pow(nH, 2);
     time_old = g_time;
     energy_old = energy_avg;
